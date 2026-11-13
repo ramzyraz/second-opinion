@@ -44,7 +44,7 @@ git clone https://github.com/ramzyraz/second-opinion ~/.claude/skills/second-opi
 git clone https://github.com/ramzyraz/second-opinion ~/.codex/skills/second-opinion
 ```
 
-Install it in both if you switch between them. It always calls the other agent.
+Install it in both if you switch between them. It calls the other agent when it's installed.
 
 **Only have one agent?** It still works. If the other CLI isn't installed, a fresh session
 of the same agent reviews instead: it hasn't seen your chat or your code, and it has to use
@@ -66,10 +66,10 @@ rounds. Each round saves `review-NN.md`, `scores-NN.json` and screenshots to
 `.second-opinion/` in your project, and ends with a scoreboard:
 
 ```
-Round  first impression  works  usefulness  polish  wow  blocking bugs  pass
-    1                 8      5           7       6    6              1  no
-    2                 8      8           8       7    6              0  yes
-    3                 8      8           8       8    7              0  yes
+Round  first impression  works  usefulness  polish  wow  blocking bugs  pass  reviewer
+    1                 8      5           7       6    6              1  no    codex
+    2                 8      8           8       7    6              0  yes   codex
+    3                 8      8           8       8    7              0  yes   codex
 VERDICT: DONE (two rounds in a row at 7+ with no blocking bugs)
 ```
 

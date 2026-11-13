@@ -16,6 +16,9 @@ fixes it and asks again. It stops when two reviews in a row clear the bar.
 
 Code review tools read the diff. This one checks whether the **product** works.
 
+Only have one of the two? It still works: a fresh session of your own agent does the review
+instead ([see below](#only-have-one-agent)).
+
 ## Why
 
 This comes from [agent-garage](https://github.com/ramzyraz/agent-garage), where Claude Code
@@ -46,7 +49,9 @@ git clone https://github.com/ramzyraz/second-opinion ~/.codex/skills/second-opin
 
 Install it in both if you switch between them. It calls the other agent when it's installed.
 
-**Only have one agent?** It still works. If the other CLI isn't installed, a fresh session
+## Only have one agent?
+
+It still works. If the other CLI isn't installed, a fresh session
 of the same agent reviews instead: it hasn't seen your chat or your code, and it has to use
 the app rather than read the diff. You lose the "different blind spots" bonus, so these
 rounds are labelled *same agent* in the review and the scoreboard. Setting

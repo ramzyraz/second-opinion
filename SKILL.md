@@ -15,9 +15,11 @@ to the code, and tells you what's wrong. You fix the worst of it and ask again.
 2. **Write a short brief** (2–4 sentences): what the app is, who it's for, and what to focus on
    this round. Describe the product the way you'd describe it to a tester. Don't describe the
    code and don't defend design choices.
-3. Pick the reviewer: **the other agent**. If you're Claude Code, it's `codex`; if you're
-   Codex, it's `claude`. The script picks this automatically from its environment; pass
-   `--reviewer` only if you need to override that.
+3. The reviewer is **the other agent**: `codex` if you're Claude Code, `claude` if you're
+   Codex. The script picks it automatically. If the other agent isn't installed, it falls
+   back to a fresh session of you, with no access to this chat or the code, and labels the
+   review "same-agent". In that case, if you know a different model than your own is
+   available (for example Sonnet when you're Opus), set `SECOND_OPINION_MODEL` to it.
 
 ## Run a review
 

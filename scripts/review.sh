@@ -10,7 +10,8 @@ usage() {
 Usage: review.sh --url URL --brief "what it is, who it's for, what to focus on"
                  [--reviewer codex|claude] [--bar 7] [--out .second-opinion]
 
-  --reviewer  defaults to the other agent: codex inside Claude Code, otherwise claude
+  --reviewer  defaults to the other agent (codex inside Claude Code, claude inside Codex);
+              if that one isn't installed, a fresh session of the same agent reviews
   --bar       minimum score for Works, Usefulness and Polish (default 7)
 
 Environment:
@@ -34,11 +35,20 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$url" ] && [ -n "$brief" ] || { usage >&2; exit 2; }
 [[ "$bar" =~ ^([1-9]|10)$ ]] || { echo "--bar must be a number from 1 to 10" >&2; exit 2; }
+builder=""
+if [ -n "${CLAUDECODE:-}" ]; then builder=claude; elif [ -n "${CODEX_THREAD_ID:-}" ]; then builder=codex; fi
 if [ -z "$reviewer" ]; then
-  if [ -n "${CLAUDECODE:-}" ]; then reviewer=codex; else reviewer=claude; fi
+  # The other agent if it's installed; otherwise a fresh session of the same one.
+  case "$builder" in claude) reviewer=codex ;; codex) reviewer=claude ;; *) reviewer=claude ;; esac
+  if ! command -v "$reviewer" >/dev/null && [ -n "$builder" ] && command -v "$builder" >/dev/null; then
+    echo "The $reviewer CLI isn't installed, so a fresh $builder session will review instead." >&2
+    reviewer=$builder
+  fi
 fi
 case "$reviewer" in codex|claude) ;; *) echo "--reviewer must be codex or claude" >&2; exit 2 ;; esac
 command -v "$reviewer" >/dev/null || { echo "The $reviewer CLI isn't installed or isn't on PATH." >&2; exit 3; }
+mode=cross-model
+[ "$reviewer" = "$builder" ] && mode=same-agent
 command -v python3 >/dev/null || { echo "python3 is needed to read the scores." >&2; exit 3; }
 
 here=$(cd "$(dirname "$0")/.." && pwd)
@@ -130,15 +140,31 @@ if [ ! -s "$work/review.md" ] || [ ! -s "$work/scores.json" ]; then
   exit 4
 fi
 
-cp "$work/review.md" "$out/review-$round.md"
+{
+  if [ "$mode" = same-agent ]; then
+    printf '> Same-agent review: a fresh %s session with no access to the build, not a different model.\n\n' "$reviewer"
+  else
+    printf '> Cross-model review by %s.\n\n' "$reviewer"
+  fi
+  cat "$work/review.md"
+} > "$out/review-$round.md"
 cp "$work/scores.json" "$out/scores-$round.json"
 if [ -n "$(ls -A "$work/shots")" ]; then cp -R "$work/shots" "$out/shots-$round"; fi
 
 cat "$out/review-$round.md"
 echo
-python3 -I - "$out" "$n" "$bar" <<'PY'
+python3 -I - "$out" "$n" "$bar" "$reviewer" "$mode" <<'PY'
 import json, sys
-out, n, bar = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+out, n, bar, reviewer, mode = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4], sys.argv[5]
+path = f"{out}/scores-{n:02d}.json"
+try:
+    with open(path) as f:
+        s = json.load(f)
+    s.update(reviewer=reviewer, mode=mode)
+    with open(path, "w") as f:
+        json.dump(s, f, indent=1)
+except (OSError, ValueError, AttributeError):
+    pass
 
 def load(i):
     try:
@@ -156,10 +182,11 @@ def passes(s):
 
 rows = [(i, load(i)) for i in range(1, n + 1)]
 keys = ("first_impression", "works", "usefulness", "polish", "wow", "blocking_bugs")
-print("Round  " + "  ".join(k.replace("_", " ") for k in keys) + "  pass")
+print("Round  " + "  ".join(k.replace("_", " ") for k in keys) + "  pass  reviewer")
 for i, s in rows:
     cells = "  ".join(str((s or {}).get(k, "?")).rjust(len(k)) for k in keys)
-    print(f"{i:>5}  {cells}  {'yes' if s and passes(s) else 'no'}")
+    who = (s or {}).get("reviewer", "?") + (" (same agent)" if (s or {}).get("mode") == "same-agent" else "")
+    print(f"{i:>5}  {cells}  {'yes' if s and passes(s) else 'no ':<4}  {who}")
 cur, prev = rows[-1][1], rows[-2][1] if n > 1 else None
 if cur is None:
     print("VERDICT: KEEP GOING (scores.json couldn't be read)")

@@ -33,8 +33,8 @@ Builders also tend to declare victory early. A fixed bar from someone else keeps
 
 ## Install
 
-You need both CLIs installed and logged in (`claude` and `codex`), plus `python3`, Node.js
-(`npm`) and Google Chrome or Chromium for the reviewer's browser.
+Ideally you have both CLIs installed and logged in (`claude` and `codex`). You also need
+`python3`, Node.js (`npm`) and Google Chrome or Chromium for the reviewer's browser.
 
 ```bash
 # Claude Code
@@ -45,6 +45,13 @@ git clone https://github.com/ramzyraz/second-opinion ~/.codex/skills/second-opin
 ```
 
 Install it in both if you switch between them. It always calls the other agent.
+
+**Only have one agent?** It still works. If the other CLI isn't installed, a fresh session
+of the same agent reviews instead: it hasn't seen your chat or your code, and it has to use
+the app rather than read the diff. You lose the "different blind spots" bonus, so these
+rounds are labelled *same agent* in the review and the scoreboard. Setting
+`SECOND_OPINION_MODEL` to a different model from the same company (Sonnet reviewing Opus,
+say) gets some of it back.
 
 ## Use
 
@@ -76,7 +83,7 @@ bash ~/.claude/skills/second-opinion/scripts/review.sh \
 
 | Option | Default | |
 |---|---|---|
-| `--reviewer` | the other agent | `codex` or `claude` |
+| `--reviewer` | the other agent, else the same one | `codex` or `claude` |
 | `--bar` | `7` | minimum for Works, Usefulness and Polish |
 | `--out` | `.second-opinion` | where reviews are saved |
 | `SECOND_OPINION_MODEL` | CLI default | model the reviewer uses |

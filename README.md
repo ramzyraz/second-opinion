@@ -1,4 +1,4 @@
-# second-opinion
+# Second-opinion
 
 **Your coding agent shouldn't grade its own homework.**
 
